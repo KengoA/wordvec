@@ -1,4 +1,4 @@
-# vec_of_word
+# wordvec
 OCaml implementation of word embedding algorithms with minimal dependencies.
 
 Supported algorithms:
