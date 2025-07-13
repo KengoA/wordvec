@@ -17,6 +17,7 @@ let parallel_map f lst n_workers =
   Array.to_list (Array.map Option.get results)
 
 let () =
+  (* convert from XML to txt *)
   let input_xml = "data/train/data.xml" in
   let output_txt = "data/train/data.txt" in
   Printf.printf "[INFO] Converting %s to %s by stripping XML tags...\n" input_xml output_txt;
@@ -25,12 +26,13 @@ let () =
   Printf.printf "[INFO] Conversion complete.\n";
   flush stdout;
 
+  (* tokenize and build vocab *)
   let chunk_size_mb = 100 in
   let all_tokens = ref [] in
   let chunk_files = ref [] in
   Printf.printf "[INFO] Splitting and processing file in %dMB chunks (using only first chunk)...\n" chunk_size_mb;
   flush stdout;
-  chunk_files := Io.File_utils.read_chunks ~filename:"data/train/data.txt" ~chunk_size_mb:chunk_size_mb ~f:(fun chunk_text ->
+  chunk_files := Io.File_utils.read_chunks ~filename:output_txt ~chunk_size_mb:chunk_size_mb ~f:(fun chunk_text ->
     flush stdout;
     let tokens = Preprocess.Text_utils.tokenize chunk_text in
     flush stdout;
@@ -56,27 +58,27 @@ let () =
   let tokens = List.rev !all_tokens in
   Printf.printf "[INFO] Total tokens from all chunks: %d\n" (List.length tokens);
   flush stdout;
-
   Printf.printf "[INFO] Building vocabulary in parallel...\n";
   flush stdout;
   let vocab_tbl, vocab_size, sorted_vocab = Preprocess.Text_utils.build_vocab_with_freq tokens in
   Printf.printf "[INFO] Vocabulary built. Vocab size: %d\n" vocab_size;
   flush stdout;
 
+  (* train embedding *)
   let embed_dim = 150 in
+  let window_size = 15 in
+  let neg_table_size = 1_000_000 in
+  let neg_samples = 5 in
   Printf.printf "[INFO] Creating SkipGram model (vocab_size=%d, embed_dim=%d)...\n" vocab_size embed_dim;
   flush stdout;
   let model = Wordvec.SkipGram.create ~vocab_size ~embed_dim in
   Printf.printf "[INFO] Generating training pairs...\n";
   flush stdout;
-  let pairs = Preprocess.Text_utils.generate_pairs tokens 10 vocab_tbl in
+  let pairs = Preprocess.Text_utils.generate_pairs tokens window_size vocab_tbl in
   Printf.printf "[INFO] Training pairs generated: %d\n" (Seq.length pairs);
   flush stdout;
-
   Printf.printf "[INFO] Building negative sampling table...\n";
   flush stdout;
-  let neg_table_size = 1_000_000 in
-  let neg_samples = 5 in
   let neg_table = Preprocess.Text_utils.build_negative_sampling_table tokens vocab_tbl neg_table_size in
   Printf.printf "[INFO] Negative sampling table built (size=%d, neg_samples=%d)\n" neg_table_size neg_samples;
   flush stdout;
