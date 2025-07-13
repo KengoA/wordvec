@@ -39,7 +39,7 @@ let read_chunks ~filename ~chunk_size_mb ~f =
   let chunk_files = split_file ~filename ~chunk_size_mb ~out_dir in
   let processed_chunks = ref [] in
   let process_chunk i chunk =
-    if i < 1 then (
+    if i < 1000 then (
       let ic = open_in_bin chunk in
       let buf = Buffer.create (1024 * 1024) in
       (try while true do Buffer.add_channel buf ic 4096 done with End_of_file -> ());
