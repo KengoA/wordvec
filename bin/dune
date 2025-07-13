@@ -1,0 +1,17 @@
+(executable
+ (name train)
+ (public_name wordvec)
+ (libraries wordvec)
+)
+
+(executable
+ (name evaluate)
+ (public_name evaluate_wordvec)
+ (libraries wordvec)
+)
+
+(executable
+ (name benchmark)
+ (public_name benchmark_wordvec)
+ (libraries wordvec)
+)
