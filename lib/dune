@@ -1,0 +1,7 @@
+(library
+ (name wordvec)
+ (public_name wordvec)
+ (modules skipgram wordvec)
+ (libraries str unix wordvec.core wordvec.io wordvec.preprocess)
+ (inline_tests)
+)

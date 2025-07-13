@@ -1,0 +1,6 @@
+(library
+ (name preprocess)
+ (public_name wordvec.preprocess)
+ (modules text_utils xml_utils)
+ (libraries str unix)
+)
