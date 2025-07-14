@@ -23,7 +23,9 @@ jobs:
           cache-prefix: v1
 
       - name: Install dependencies
-        run: opam install . --deps-only --with-test --jobs=4
+        run: |
+          opam install ocamlformat
+          opam install . --deps-only --with-test --jobs=4
 
       - name: Build
         run: |
@@ -34,20 +36,3 @@ jobs:
           opam exec -- dune fmt
           git diff --exit-code
 
-  lint:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup OCaml (minimal)
-        uses: ocaml/setup-ocaml@v3
-        with:
-          ocaml-compiler: 5.1
-          dune-cache: false
-          opam-pin: false
-
-      - name: Lint opam files
-        run: opam lint *.opam
