@@ -69,6 +69,7 @@ let () =
   let window_size = 15 in
   let neg_table_size = 1_000_000 in
   let neg_samples = 5 in
+  let epochs = 2 in
   Printf.printf "[INFO] Creating SkipGram model (vocab_size=%d, embed_dim=%d)...\n" vocab_size embed_dim;
   flush stdout;
   let model = Wordvec.SkipGram.create ~vocab_size ~embed_dim in
@@ -85,7 +86,7 @@ let () =
 
   Printf.printf "[INFO] Starting training...\n";
   flush stdout;
-  Wordvec.SkipGram.train model pairs ~neg_table ~neg_samples ~epochs:2;
+  Wordvec.SkipGram.train model pairs ~neg_table ~neg_samples ~epochs:epochs;
   Printf.printf "[INFO] Training complete.\n";
   Printf.printf "Trained word2vec model with vocab_size=%d, embed_dim=%d\n" vocab_size embed_dim;
 
