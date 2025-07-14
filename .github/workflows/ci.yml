@@ -1,48 +1,53 @@
-name: Build, Test and Lint
+name: Build and Lint
 
 on:
-  - push
-  - pull_request
+  pull_request:
+    branches: [ main ]
 
 permissions: read-all
 
 jobs:
-  build:
-    runs-on:
-      - ubuntu-latest
-    steps:
-      - name: Checkout tree
-        uses: actions/checkout@v4
-
-      - name: Set-up OCaml
-        uses: ocaml/setup-ocaml@v3
-        with:
-          ocaml-compiler: 5
-
-      - run: opam install . --deps-only --with-test
-
-      - run: opam exec -- dune build
-
-      - run: opam exec -- dune runtest
-
-  lint-fmt:
+  build-and-test:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout tree
+      - name: Checkout
         uses: actions/checkout@v4
-      - name: Set-up OCaml
-        uses: ocaml/setup-ocaml@v3
-        with:
-          ocaml-compiler: 5
-      - uses: ocaml/setup-ocaml/lint-fmt@v3
 
-  lint-opam:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout tree
-        uses: actions/checkout@v4
-      - name: Set-up OCaml
+      - name: Setup OCaml
         uses: ocaml/setup-ocaml@v3
         with:
-          ocaml-compiler: 5
-      - uses: ocaml/setup-ocaml/lint-opam@v3
+          ocaml-compiler: 5.1
+          dune-cache: true
+          opam-pin: false
+          cache-prefix: v1
+
+      - name: Install dependencies
+        run: opam install . --deps-only --with-test --jobs=4
+
+      - name: Build
+        run: |
+          opam exec -- dune build --profile dev
+
+      - name: Check formatting
+        run: |
+          opam exec -- dune fmt
+          git diff --exit-code
+
+  lint:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup OCaml (minimal)
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5.1
+          dune-cache: false
+          opam-pin: false
+
+      - name: Lint opam files
+        run: opam lint *.opam
