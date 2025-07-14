@@ -1,0 +1,13 @@
+profile = default
+version = 0.27.0
+break-cases = fit-or-vertical
+break-sequences = true
+cases-exp-indent = 2
+doc-comments = before
+field-space = loose
+if-then-else = compact
+indicate-nested-or-patterns = unsafe-no
+let-and = compact
+sequence-style = separator
+type-decl = compact
+wrap-comments = true

@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup OCaml
+      uses: ocaml/setup-ocaml@v2
+      with:
+        ocaml-compiler: 4.14.x
+        
+    - name: Install dependencies
+      run: opam install . --deps-only --with-test
+      
+    - name: Check formatting
+      run: opam exec -- dune fmt --check
+      
+    - name: Build
+      run: opam exec -- dune build
+      
+    - name: Run tests
+      run: opam exec -- dune runtest
