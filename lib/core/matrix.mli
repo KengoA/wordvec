@@ -1,5 +1,6 @@
 module type MatrixSig = sig
   type t
+
   val zeros : int -> int -> t
   val random : int -> int -> t
   val shape : t -> int * int

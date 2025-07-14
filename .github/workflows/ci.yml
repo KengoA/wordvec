@@ -1,0 +1,38 @@
+name: Build and Lint
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions: read-all
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5.1
+          dune-cache: true
+          opam-pin: false
+          cache-prefix: v1
+
+      - name: Install dependencies
+        run: |
+          opam install ocamlformat
+          opam install . --deps-only --with-test --jobs=4
+
+      - name: Build
+        run: |
+          opam exec -- dune build --profile dev
+
+      - name: Check formatting
+        run: |
+          opam exec -- dune fmt
+          git diff --exit-code
+
