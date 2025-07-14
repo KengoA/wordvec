@@ -1,34 +1,48 @@
-name: CI
+name: Build, Test and Lint
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  - push
+  - pull_request
+
+permissions: read-all
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    
+  build:
+    runs-on:
+      - ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup OCaml
-      uses: ocaml/setup-ocaml@v2
-      with:
-        ocaml-compiler: 4.14.x
-        
-    - name: Install dependencies
-      run: opam install . --deps-only --with-test
+      - name: Checkout tree
+        uses: actions/checkout@v4
 
-    - name: Install darcs (via opam)
-      run: opam install darcs
-      
-    - name: Check formatting
-      run: opam exec -- dune fmt --check
-      
-    - name: Build
-      run: opam exec -- dune build
-      
-    - name: Run tests
-      run: opam exec -- dune runtest
+      - name: Set-up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5
+
+      - run: opam install . --deps-only --with-test
+
+      - run: opam exec -- dune build
+
+      - run: opam exec -- dune runtest
+
+  lint-fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tree
+        uses: actions/checkout@v4
+      - name: Set-up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5
+      - uses: ocaml/setup-ocaml/lint-fmt@v3
+
+  lint-opam:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tree
+        uses: actions/checkout@v4
+      - name: Set-up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5
+      - uses: ocaml/setup-ocaml/lint-opam@v3
