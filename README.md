@@ -4,7 +4,6 @@ OCaml implementation of word embedding algorithms with minimal dependencies.
 Supported algorithms:
 
 - ✅️ Word2Vec
-- [] Glove
 
 Steps
 ```bash
