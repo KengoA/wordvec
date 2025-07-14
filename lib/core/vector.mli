@@ -1,5 +1,6 @@
 module type VectorSig = sig
   type t
+
   val zeros : int -> t
   val random : int -> t
   val get : t -> int -> float

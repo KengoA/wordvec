@@ -2,6 +2,8 @@
 
 (name wordvec)
 
+(formatting (enabled_for ocaml))
+
 (generate_opam_files true)
 
 (source
