@@ -1,0 +1,6 @@
+(library
+ (name core)
+ (public_name wordvec.core)
+ (modules matrix vector similarity)
+ (libraries str unix)
+)
