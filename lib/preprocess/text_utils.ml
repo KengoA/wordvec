@@ -34,7 +34,8 @@ let build_vocab_with_freq tokens =
   List.iter
     (fun (w, _) ->
       try
-        let _ = Hashtbl.find tbl w in ()
+        let _ = Hashtbl.find tbl w in
+        ()
       with Not_found ->
         Hashtbl.add tbl w !idx ;
         incr idx)
@@ -49,22 +50,21 @@ let generate_pairs_seq tokens window_size vocab =
     if i >= len then Nil
     else
       let input_word = arr.(i) in
-      (match Hashtbl.find_opt vocab input_word with
-       | None -> outer (i + 1) ()
-       | Some input_idx ->
-         let left = max 0 (i - window_size) in
-         let right = min (len - 1) (i + window_size) in
-         let rec inner j () =
-           if j > right then outer (i + 1) ()
-           else if i = j then inner (j + 1) ()
-           else
-             let context_word = arr.(j) in
-             (match Hashtbl.find_opt vocab context_word with
-              | None -> inner (j + 1) ()
-              | Some context_idx ->
-                Cons ((input_idx, context_idx), inner (j + 1)))
-         in
-         inner left ())
+      match Hashtbl.find_opt vocab input_word with
+      | None -> outer (i + 1) ()
+      | Some input_idx ->
+        let left = max 0 (i - window_size) in
+        let right = min (len - 1) (i + window_size) in
+        let rec inner j () =
+          if j > right then outer (i + 1) ()
+          else if i = j then inner (j + 1) ()
+          else
+            let context_word = arr.(j) in
+            match Hashtbl.find_opt vocab context_word with
+            | None -> inner (j + 1) ()
+            | Some context_idx -> Cons ((input_idx, context_idx), inner (j + 1))
+        in
+        inner left ()
   in
   outer 0
 
@@ -114,15 +114,14 @@ let sample_negative table n target_idx =
   let seen = Hashtbl.create n in
   let result = Array.make n 0 in
   let count = ref 0 in
-  
+
   while !count < n do
     let idx = table.(Random.int table_len) in
     if idx <> target_idx && not (Hashtbl.mem seen idx) then (
-      Hashtbl.add seen idx ();
-      result.(!count) <- idx;
-      incr count
-    )
-  done;
+      Hashtbl.add seen idx () ;
+      result.(!count) <- idx ;
+      incr count)
+  done ;
   Array.to_list result
 
 let save_vocab_freq ~filename ~sorted_vocab =
