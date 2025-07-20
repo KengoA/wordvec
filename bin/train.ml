@@ -33,12 +33,14 @@ let speclist =
     ("--neg-samples", Arg.Set_int neg_samples, " Number of negative samples");
     ("--epochs", Arg.Set_int epochs, " Number of training epochs");
     ("--batch-size", Arg.Set_int batch_size, " Batch size for training");
-    ("--chunk-size", Arg.Set_int chunk_size_mb, " Chunk size in MB for processing");
+    ( "--chunk-size",
+      Arg.Set_int chunk_size_mb,
+      " Chunk size in MB for processing" );
   ]
 
 let () =
   Arg.parse speclist (fun _ -> ()) usage_msg ;
-  
+
   Printf.printf "[INFO] Training Configuration:\n" ;
   Printf.printf "  Input file: %s\n" !input_file ;
   Printf.printf "  Embedding dimension: %d\n" !embed_dim ;
@@ -121,14 +123,19 @@ let () =
     neg_table_size !neg_samples ;
   flush stdout ;
 
-  Printf.printf "[INFO] Starting batched training (batch_size=%d, epochs=%d)...\n" !batch_size !epochs ;
+  Printf.printf
+    "[INFO] Starting batched training (batch_size=%d, epochs=%d)...\n"
+    !batch_size !epochs ;
   flush stdout ;
   let training_start_time = Unix.gettimeofday () in
-  Wordvec.SkipGram.train model pairs ~neg_table ~neg_samples:!neg_samples ~epochs:!epochs ~batch_size:!batch_size () ;
+  Wordvec.SkipGram.train model pairs ~neg_table ~neg_samples:!neg_samples
+    ~epochs:!epochs ~batch_size:!batch_size () ;
   let training_end_time = Unix.gettimeofday () in
   let total_training_time = training_end_time -. training_start_time in
-  Printf.printf "[INFO] Training complete in %.2f seconds.\n" total_training_time ;
-  Printf.printf "Trained word2vec model with vocab_size=%d, embed_dim=%d, batch_size=%d\n"
+  Printf.printf "[INFO] Training complete in %.2f seconds.\n"
+    total_training_time ;
+  Printf.printf
+    "Trained word2vec model with vocab_size=%d, embed_dim=%d, batch_size=%d\n"
     vocab_size !embed_dim !batch_size ;
 
   Printf.printf "[INFO] Saving vocabulary frequencies...\n" ;

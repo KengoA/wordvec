@@ -82,20 +82,20 @@ let prepare_text_file ~input_file =
   if is_txt_file input_file then (
     Printf.printf "[INFO] Input file is already a text file: %s\n" input_file ;
     flush stdout ;
-    input_file
-  ) else if is_xml_file input_file then (
-    let output_txt = 
+    input_file)
+  else if is_xml_file input_file then (
+    let output_txt =
       let base = Filename.remove_extension input_file in
       base ^ ".txt"
     in
-    Printf.printf "[INFO] Converting XML file %s to text file %s...\n" 
+    Printf.printf "[INFO] Converting XML file %s to text file %s...\n"
       input_file output_txt ;
     flush stdout ;
     Preprocess.Xml_utils.xml_to_txt ~input_xml:input_file ~output_txt ;
     Printf.printf "[INFO] Conversion complete.\n" ;
     flush stdout ;
-    output_txt
-  ) else (
-    Printf.printf "[ERROR] Unsupported file format. Only .xml and .txt files are supported.\n" ;
-    failwith "Unsupported file format"
-  )
+    output_txt)
+  else (
+    Printf.printf
+      "[ERROR] Unsupported file format. Only .xml and .txt files are supported.\n" ;
+    failwith "Unsupported file format")
