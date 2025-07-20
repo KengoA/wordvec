@@ -18,10 +18,24 @@ curl -L https://dumps.wikimedia.org/simplewiki/latest/simplewiki-latest-pages-ar
 
 dune build
 
-# Train the model
-dune exec bin/train.exe
+# Train the model with custom configuration
+dune exec bin/train.exe -- --input data/training/simplewikipedia.xml --embed-dim 150 --window-size 15 --epochs 2 --batch-size 1000
+
 # Evaluate Top 5 similar words for common words
 dune exec bin/evaluate.exe
 # Evaluate against WordSim-353 dataset
 dune exec bin/benchmark.exe
 ```
+
+## Configuration Options
+
+The training script supports the following command-line options:
+
+- `--input`: Input file path (.xml or .txt) - default: `data/train/data.txt`
+- `--embed-dim`: Embedding dimension - default: 150
+- `--window-size`: Context window size - default: 15
+- `--neg-samples`: Number of negative samples - default: 5
+- `--epochs`: Number of training epochs - default: 2
+- `--batch-size`: Batch size for training - default: 1000
+- `--chunk-size`: Chunk size in MB for processing - default: 100
+
