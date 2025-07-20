@@ -52,11 +52,20 @@ module SkipGram : SkipGramSig = struct
     let lr = 0.01 in
     let vocab_size = Array.length model.w_in in
     let embed_dim = model.embed_dim in
+    let log_interval = 1_000_000 in
+    
+    Printf.printf "[INFO] Counting total training pairs...\n" ;
+    flush stdout ;
+    let total_pairs_count = Seq.fold_left (fun acc _ -> acc + 1) 0 pairs in
+    Printf.printf "[INFO] Total training pairs: %d\n" total_pairs_count ;
+    flush stdout ;
     
     for epoch = 1 to epochs do
       let batch = ref [] in
       let batch_count = ref 0 in
       let total_pairs = ref 0 in
+      let epoch_start_time = Unix.gettimeofday () in
+      let last_log_time = ref epoch_start_time in
       
       let grad_w_in = Array.make_matrix vocab_size embed_dim 0.0 in
       let grad_w_out = Array.make_matrix vocab_size embed_dim 0.0 in
@@ -90,6 +99,17 @@ module SkipGram : SkipGramSig = struct
         batch := (input_idx, context_idx) :: !batch ;
         incr batch_count ;
         incr total_pairs ;
+        
+        if !total_pairs mod log_interval = 0 then (
+          let current_time = Unix.gettimeofday () in
+          let elapsed_since_last = current_time -. !last_log_time in
+          let pairs_per_sec = float_of_int log_interval /. elapsed_since_last in
+          let percentage = (float_of_int !total_pairs /. float_of_int total_pairs_count) *. 100.0 in
+          Printf.printf "[Epoch %d/%d] Processed %d pairs (%.1f%%, %.1f pairs/sec, batch_size=%d)\n" 
+            epoch epochs !total_pairs percentage pairs_per_sec batch_size ;
+          flush stdout ;
+          last_log_time := current_time
+        ) ;
         
         let input_vec = model.w_in.(input_idx) in
         
@@ -126,8 +146,12 @@ module SkipGram : SkipGramSig = struct
       
       if !batch_count > 0 then apply_batch () ;
       
-      Printf.printf "[Epoch %d/%d] finished (processed %d pairs in batches of %d)\n" 
-        epoch epochs !total_pairs batch_size ;
+      let epoch_end_time = Unix.gettimeofday () in
+      let epoch_duration = epoch_end_time -. epoch_start_time in
+      let avg_pairs_per_sec = float_of_int !total_pairs /. epoch_duration in
+      let final_percentage = (float_of_int !total_pairs /. float_of_int total_pairs_count) *. 100.0 in
+      Printf.printf "[Epoch %d/%d] finished (processed %d pairs, %.1f%%, %.2fs, avg %.1f pairs/sec, batch_size=%d)\n" 
+        epoch epochs !total_pairs final_percentage epoch_duration avg_pairs_per_sec batch_size ;
       flush stdout
     done
 
