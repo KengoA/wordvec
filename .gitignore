@@ -3,3 +3,4 @@ _build/
 .DS_Store
 data/train/*.xml
 data/train/*.txt
+data/train/read_chunks/*
