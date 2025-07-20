@@ -17,7 +17,7 @@ let parallel_map f lst n_workers =
   Array.to_list (Array.map Option.get results)
 
 let usage_msg = "train [options]"
-let input_file = ref "data/train/data.txt"
+let input_file = ref "data/train/simplewikipedia.xml"
 let embed_dim = ref 150
 let window_size = ref 15
 let neg_samples = ref 5

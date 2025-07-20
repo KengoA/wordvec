@@ -1,5 +1,5 @@
 _opam/*
 _build/
 .DS_Store
-data/training/*.xml
-data/training/*.txt
+data/train/*.xml
+data/train/*.txt
