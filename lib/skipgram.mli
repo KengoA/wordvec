@@ -9,6 +9,8 @@ module type SkipGramSig = sig
     neg_table:int array ->
     neg_samples:int ->
     epochs:int ->
+    ?batch_size:int ->
+    unit ->
     unit
 
   val get_embedding : t -> int -> float array
