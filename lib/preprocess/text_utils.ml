@@ -105,14 +105,20 @@ let build_negative_sampling_table tokens vocab table_size =
   table
 
 let sample_negative table n target_idx =
-  let rec pick acc =
-    if List.length acc >= n then acc
-    else
-      let idx = table.(Random.int (Array.length table)) in
-      if idx <> target_idx && not (List.mem idx acc) then pick (idx :: acc)
-      else pick acc
-  in
-  pick []
+  let table_len = Array.length table in
+  let seen = Hashtbl.create n in
+  let result = ref [] in
+  let attempts = ref 0 in
+  
+  while List.length !result < n do
+    let idx = table.(Random.int table_len) in
+    incr attempts;
+    if idx <> target_idx && not (Hashtbl.mem seen idx) then (
+      Hashtbl.add seen idx ();
+      result := idx :: !result
+    )
+  done;
+  !result
 
 let save_vocab_freq ~filename ~sorted_vocab =
   let oc = open_out filename in
