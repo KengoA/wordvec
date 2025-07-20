@@ -108,11 +108,9 @@ let sample_negative table n target_idx =
   let table_len = Array.length table in
   let seen = Hashtbl.create n in
   let result = ref [] in
-  let attempts = ref 0 in
   
   while List.length !result < n do
     let idx = table.(Random.int table_len) in
-    incr attempts;
     if idx <> target_idx && not (Hashtbl.mem seen idx) then (
       Hashtbl.add seen idx ();
       result := idx :: !result
