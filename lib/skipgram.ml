@@ -36,17 +36,35 @@ module SkipGram : SkipGramSig = struct
   }
 
   let create ~vocab_size ~embed_dim =
+    let xavier_bound_in = sqrt (6.0 /. (float_of_int vocab_size +. float_of_int embed_dim)) in
+    let xavier_bound_out = sqrt (6.0 /. (float_of_int embed_dim +. float_of_int vocab_size)) in
     {
       w_in =
         Array.init vocab_size (fun _ ->
-            Array.init embed_dim (fun _ -> Random.float 1.0));
+            Array.init embed_dim (fun _ -> 
+              Random.float (2.0 *. xavier_bound_in) -. xavier_bound_in));
       w_out =
         Array.init vocab_size (fun _ ->
-            Array.init embed_dim (fun _ -> Random.float 1.0));
+            Array.init embed_dim (fun _ -> 
+              Random.float (2.0 *. xavier_bound_out) -. xavier_bound_out));
       embed_dim;
     }
 
-  let sigmoid x = 1.0 /. (1.0 +. exp (-.x))
+  (* Fast sigmoid approximation using polynomial approximation *)
+  let sigmoid x =
+    if x > 6.0 then 1.0
+    else if x < -6.0 then 0.0
+    else
+      (* Polynomial approximation: sigmoid(x) ≈ 0.5 + 0.25*x - 0.05*x^3 for |x| <= 2.5 *)
+      if abs_float x <= 2.5 then
+        let x2 = x *. x in
+        let x3 = x2 *. x in
+        0.5 +. 0.25 *. x -. 0.05 *. x3
+      else
+        (* For larger values, use a rational approximation *)
+        let x_abs = abs_float x in
+        let result = 1.0 /. (1.0 +. x_abs +. 0.5 *. x_abs *. x_abs) in
+        if x >= 0.0 then 1.0 -. result else result
 
   let train model pairs ~neg_table ~neg_samples ~epochs ?(batch_size = 1000) ()
       =
