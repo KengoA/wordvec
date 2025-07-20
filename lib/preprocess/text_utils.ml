@@ -1,8 +1,9 @@
 let tokenize text =
-  let re = Str.regexp "[^a-zA-Z0-9_]+" in
-  text |> String.lowercase_ascii |> Str.split re
+  let split_re = Str.regexp "[^a-zA-Z0-9_]+" in
+  let digit_re = Str.regexp "^[0-9]+$" in
+  text |> String.lowercase_ascii |> Str.split split_re
   |> List.filter (fun s -> String.length s > 0)
-  |> List.filter (fun w -> not (Str.string_match (Str.regexp "^[0-9]+$") w 0))
+  |> List.filter (fun w -> not (Str.string_match digit_re w 0))
 
 let build_vocab tokens =
   let tbl = Hashtbl.create 100 in
@@ -32,9 +33,11 @@ let build_vocab_with_freq tokens =
   in
   List.iter
     (fun (w, _) ->
-      if not (Hashtbl.mem tbl w) then (
+      try
+        let _ = Hashtbl.find tbl w in ()
+      with Not_found ->
         Hashtbl.add tbl w !idx ;
-        incr idx))
+        incr idx)
     sorted ;
   (tbl, !idx, sorted)
 
@@ -46,22 +49,22 @@ let generate_pairs_seq tokens window_size vocab =
     if i >= len then Nil
     else
       let input_word = arr.(i) in
-      if not (Hashtbl.mem vocab input_word) then outer (i + 1) ()
-      else
-        let input_idx = Hashtbl.find vocab input_word in
-        let left = max 0 (i - window_size) in
-        let right = min (len - 1) (i + window_size) in
-        let rec inner j () =
-          if j > right then outer (i + 1) ()
-          else if i = j then inner (j + 1) ()
-          else
-            let context_word = arr.(j) in
-            if not (Hashtbl.mem vocab context_word) then inner (j + 1) ()
-            else
-              let context_idx = Hashtbl.find vocab context_word in
-              Cons ((input_idx, context_idx), inner (j + 1))
-        in
-        inner left ()
+      (match Hashtbl.find_opt vocab input_word with
+       | None -> outer (i + 1) ()
+       | Some input_idx ->
+         let left = max 0 (i - window_size) in
+         let right = min (len - 1) (i + window_size) in
+         let rec inner j () =
+           if j > right then outer (i + 1) ()
+           else if i = j then inner (j + 1) ()
+           else
+             let context_word = arr.(j) in
+             (match Hashtbl.find_opt vocab context_word with
+              | None -> inner (j + 1) ()
+              | Some context_idx ->
+                Cons ((input_idx, context_idx), inner (j + 1)))
+         in
+         inner left ())
   in
   outer 0
 
@@ -76,7 +79,9 @@ let build_negative_sampling_table tokens vocab table_size =
   let word_freq = Hashtbl.create 100 in
   List.iter
     (fun w ->
-      if Hashtbl.mem vocab w then
+      match Hashtbl.find_opt vocab w with
+      | None -> ()
+      | Some _ ->
         let c = try Hashtbl.find word_freq w with Not_found -> 0 in
         Hashtbl.replace word_freq w (c + 1))
     tokens ;
@@ -107,16 +112,18 @@ let build_negative_sampling_table tokens vocab table_size =
 let sample_negative table n target_idx =
   let table_len = Array.length table in
   let seen = Hashtbl.create n in
-  let result = ref [] in
+  let result = Array.make n 0 in
+  let count = ref 0 in
   
-  while List.length !result < n do
+  while !count < n do
     let idx = table.(Random.int table_len) in
     if idx <> target_idx && not (Hashtbl.mem seen idx) then (
       Hashtbl.add seen idx ();
-      result := idx :: !result
+      result.(!count) <- idx;
+      incr count
     )
   done;
-  !result
+  Array.to_list result
 
 let save_vocab_freq ~filename ~sorted_vocab =
   let oc = open_out filename in
