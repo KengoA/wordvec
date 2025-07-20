@@ -36,13 +36,21 @@ module SkipGram : SkipGramSig = struct
   }
 
   let create ~vocab_size ~embed_dim =
+    let xavier_bound_in =
+      sqrt (6.0 /. (float_of_int vocab_size +. float_of_int embed_dim))
+    in
+    let xavier_bound_out =
+      sqrt (6.0 /. (float_of_int embed_dim +. float_of_int vocab_size))
+    in
     {
       w_in =
         Array.init vocab_size (fun _ ->
-            Array.init embed_dim (fun _ -> Random.float 1.0));
+            Array.init embed_dim (fun _ ->
+                Random.float (2.0 *. xavier_bound_in) -. xavier_bound_in));
       w_out =
         Array.init vocab_size (fun _ ->
-            Array.init embed_dim (fun _ -> Random.float 1.0));
+            Array.init embed_dim (fun _ ->
+                Random.float (2.0 *. xavier_bound_out) -. xavier_bound_out));
       embed_dim;
     }
 
