@@ -16,8 +16,8 @@ let parallel_map f lst n_workers =
   Array.iter Domain.join domains ;
   Array.to_list (Array.map Option.get results)
 
-let input_xml = ref "data/train/data.xml"
-let output_txt = ref "data/train/data.txt"
+let usage_msg = "train [options]"
+let input_file = ref "data/train/data.txt"
 let embed_dim = ref 150
 let window_size = ref 15
 let neg_samples = ref 5
@@ -27,8 +27,7 @@ let chunk_size_mb = ref 100
 
 let speclist =
   [
-    ("--input", Arg.Set_string input_xml, " Input XML file path");
-    ("--output", Arg.Set_string output_txt, " Output text file path");
+    ("--input", Arg.Set_string input_file, " Input file path (.xml or .txt)");
     ("--embed-dim", Arg.Set_int embed_dim, " Embedding dimension");
     ("--window-size", Arg.Set_int window_size, " Context window size");
     ("--neg-samples", Arg.Set_int neg_samples, " Number of negative samples");
@@ -41,8 +40,7 @@ let () =
   Arg.parse speclist (fun _ -> ()) usage_msg ;
   
   Printf.printf "[INFO] Training Configuration:\n" ;
-  Printf.printf "  Input XML: %s\n" !input_xml ;
-  Printf.printf "  Output TXT: %s\n" !output_txt ;
+  Printf.printf "  Input file: %s\n" !input_file ;
   Printf.printf "  Embedding dimension: %d\n" !embed_dim ;
   Printf.printf "  Window size: %d\n" !window_size ;
   Printf.printf "  Negative samples: %d\n" !neg_samples ;
@@ -51,12 +49,7 @@ let () =
   Printf.printf "  Chunk size: %dMB\n" !chunk_size_mb ;
   flush stdout ;
 
-  Printf.printf "[INFO] Converting %s to %s by stripping XML tags...\n"
-    !input_xml !output_txt ;
-  flush stdout ;
-  Preprocess.Xml_utils.xml_to_txt ~input_xml:!input_xml ~output_txt:!output_txt ;
-  Printf.printf "[INFO] Conversion complete.\n" ;
-  flush stdout ;
+  let text_file = Io.File_utils.prepare_text_file ~input_file:!input_file in
 
   let all_tokens = ref [] in
   let chunk_files = ref [] in
@@ -66,7 +59,7 @@ let () =
     !chunk_size_mb ;
   flush stdout ;
   chunk_files :=
-    Io.File_utils.read_chunks ~filename:!output_txt ~chunk_size_mb:!chunk_size_mb
+    Io.File_utils.read_chunks ~filename:text_file ~chunk_size_mb:!chunk_size_mb
       ~f:(fun chunk_text ->
         flush stdout ;
         let tokens = Preprocess.Text_utils.tokenize chunk_text in
@@ -128,10 +121,13 @@ let () =
     neg_table_size !neg_samples ;
   flush stdout ;
 
-  Printf.printf "[INFO] Starting batched training (batch_size=%d)...\n" !batch_size ;
+  Printf.printf "[INFO] Starting batched training (batch_size=%d, epochs=%d)...\n" !batch_size !epochs ;
   flush stdout ;
+  let training_start_time = Unix.gettimeofday () in
   Wordvec.SkipGram.train model pairs ~neg_table ~neg_samples:!neg_samples ~epochs:!epochs ~batch_size:!batch_size () ;
-  Printf.printf "[INFO] Training complete.\n" ;
+  let training_end_time = Unix.gettimeofday () in
+  let total_training_time = training_end_time -. training_start_time in
+  Printf.printf "[INFO] Training complete in %.2f seconds.\n" total_training_time ;
   Printf.printf "Trained word2vec model with vocab_size=%d, embed_dim=%d, batch_size=%d\n"
     vocab_size !embed_dim !batch_size ;
 
