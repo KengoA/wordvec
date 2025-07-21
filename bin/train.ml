@@ -16,21 +16,45 @@ let neg_table_size = ref 1_000_000
 let speclist =
   [
     ("--input", Arg.Set_string input_file, " Input file path (.xml or .txt)");
-    ("--dim", Arg.Set_int embed_dim, Printf.sprintf " Embedding dimension (default: %d)" !embed_dim);
-    ("--window-size", Arg.Set_int window_size, Printf.sprintf " Context window size (default: %d)" !window_size);
-    ("--epochs", Arg.Set_int epochs, Printf.sprintf " Number of training epochs (default: %d)" !epochs);
-    ("--neg-samples", Arg.Set_int neg_samples, Printf.sprintf " Number of negative samples (default: %d)" !neg_samples);
-    ("--neg-table-size", Arg.Set_int neg_table_size, Printf.sprintf " Negative sampling table size (default: %d)" !neg_table_size);
-    ("--chunk-size", Arg.Set_int chunk_size_mb, Printf.sprintf " Chunk size in MB for processing (default: %d)" !chunk_size_mb);
-    ("--workers", Arg.Set_int n_workers, Printf.sprintf " Number of parallel workers (default: %d)" !n_workers);
-    ("--min-freq", Arg.Set_int min_vocab_freq, Printf.sprintf " Minimum vocabulary frequency (default: %d)" !min_vocab_freq);
-    ("--vocab-output", Arg.Set_string output_vocab, Printf.sprintf " Output vocabulary file (default: %s)" !output_vocab);
-    ("--embed-output", Arg.Set_string output_embeddings, Printf.sprintf " Output embeddings file (default: %s)" !output_embeddings);
+    ( "--dim",
+      Arg.Set_int embed_dim,
+      Printf.sprintf " Embedding dimension (default: %d)" !embed_dim );
+    ( "--window-size",
+      Arg.Set_int window_size,
+      Printf.sprintf " Context window size (default: %d)" !window_size );
+    ( "--epochs",
+      Arg.Set_int epochs,
+      Printf.sprintf " Number of training epochs (default: %d)" !epochs );
+    ( "--neg-samples",
+      Arg.Set_int neg_samples,
+      Printf.sprintf " Number of negative samples (default: %d)" !neg_samples );
+    ( "--neg-table-size",
+      Arg.Set_int neg_table_size,
+      Printf.sprintf " Negative sampling table size (default: %d)"
+        !neg_table_size );
+    ( "--chunk-size",
+      Arg.Set_int chunk_size_mb,
+      Printf.sprintf " Chunk size in MB for processing (default: %d)"
+        !chunk_size_mb );
+    ( "--workers",
+      Arg.Set_int n_workers,
+      Printf.sprintf " Number of parallel workers (default: %d)" !n_workers );
+    ( "--min-freq",
+      Arg.Set_int min_vocab_freq,
+      Printf.sprintf " Minimum vocabulary frequency (default: %d)"
+        !min_vocab_freq );
+    ( "--vocab-output",
+      Arg.Set_string output_vocab,
+      Printf.sprintf " Output vocabulary file (default: %s)" !output_vocab );
+    ( "--embed-output",
+      Arg.Set_string output_embeddings,
+      Printf.sprintf " Output embeddings file (default: %s)" !output_embeddings
+    );
   ]
 
 let () =
   Arg.parse speclist (fun _ -> ()) usage_msg ;
-  
+
   Printf.printf "[INFO] Training Configuration:\n" ;
   Printf.printf "  Input file: %s\n" !input_file ;
   Printf.printf "  Embedding dimension: %d\n" !embed_dim ;
@@ -53,8 +77,8 @@ let () =
     !chunk_size_mb ;
   flush stdout ;
   chunk_files :=
-    Io.File_utils.read_chunks ~filename:!input_file ~chunk_size_mb:!chunk_size_mb
-      ~f:(fun chunk_text ->
+    Io.File_utils.read_chunks ~filename:!input_file
+      ~chunk_size_mb:!chunk_size_mb ~f:(fun chunk_text ->
         flush stdout ;
         let tokens = Preprocess.Text_utils.tokenize chunk_text in
         flush stdout ;
@@ -116,16 +140,17 @@ let () =
   Printf.printf "[INFO] Starting training (epochs=%d)...\n" !epochs ;
   flush stdout ;
   let training_start_time = Unix.gettimeofday () in
-  Wordvec.SkipGram.train model pairs ~neg_table ~neg_samples:!neg_samples ~epochs:!epochs ;
+  Wordvec.SkipGram.train model pairs ~neg_table ~neg_samples:!neg_samples
+    ~epochs:!epochs ;
   let training_end_time = Unix.gettimeofday () in
   let total_training_time = training_end_time -. training_start_time in
-  Printf.printf "[INFO] Training complete in %.2f seconds.\n" total_training_time ;
+  Printf.printf "[INFO] Training complete in %.2f seconds.\n"
+    total_training_time ;
   Printf.printf "Trained word2vec model with vocab_size=%d, embed_dim=%d\n"
     vocab_size !embed_dim ;
 
   Printf.printf "[INFO] Saving vocabulary frequencies...\n" ;
-  Preprocess.Text_utils.save_vocab_freq
-    ~filename:!output_vocab ~sorted_vocab ;
+  Preprocess.Text_utils.save_vocab_freq ~filename:!output_vocab ~sorted_vocab ;
   Printf.printf "[INFO] Saving embeddings...\n" ;
   Wordvec.SkipGram.save ~filename:!output_embeddings ~model
     ~embed_dim:!embed_dim ~sorted_vocab ~vocab_tbl ;

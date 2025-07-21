@@ -31,7 +31,7 @@ dune exec bin/benchmark.exe
 
 The training script supports the following command-line options:
 
-- `--input`: Input file path (.xml or .txt) - default: `data/train/simplewikipedia.txt`
+- `--input`: Input file path (.xml or .txt)
 - `--dim`: Embedding dimension - default: 150
 - `--window-size`: Context window size - default: 15
 - `--neg-samples`: Number of negative samples - default: 5
