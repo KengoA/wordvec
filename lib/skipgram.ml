@@ -34,13 +34,21 @@ module SkipGram : SkipGramSig = struct
   }
 
   let create ~vocab_size ~embed_dim =
+    let xavier_bound_in =
+      sqrt (6.0 /. (float_of_int vocab_size +. float_of_int embed_dim))
+    in
+    let xavier_bound_out =
+      sqrt (6.0 /. (float_of_int embed_dim +. float_of_int vocab_size))
+    in
     {
       w_in =
         Array.init vocab_size (fun _ ->
-            Array.init embed_dim (fun _ -> Random.float 1.0));
+            Array.init embed_dim (fun _ ->
+                Random.float (2.0 *. xavier_bound_in) -. xavier_bound_in));
       w_out =
         Array.init vocab_size (fun _ ->
-            Array.init embed_dim (fun _ -> Random.float 1.0));
+            Array.init embed_dim (fun _ ->
+                Random.float (2.0 *. xavier_bound_out) -. xavier_bound_out));
       embed_dim;
     }
 
@@ -71,12 +79,53 @@ module SkipGram : SkipGramSig = struct
 
   let train model pairs ~neg_table ~neg_samples ~epochs =
     let lr = 0.01 in
+    let log_interval = 1_000_000 in
+
+    Printf.printf "[INFO] Counting total training pairs...\n" ;
+    flush stdout ;
+    let total_pairs_count = Seq.fold_left (fun acc _ -> acc + 1) 0 pairs in
+    Printf.printf "[INFO] Total training pairs: %d\n" total_pairs_count ;
+    flush stdout ;
+
     for epoch = 1 to epochs do
+      let processed_pairs = ref 0 in
+      let last_log_time = ref (Unix.gettimeofday ()) in
+      let epoch_start_time = Unix.gettimeofday () in
+
       Seq.iter
         (fun (input_idx, context_idx) ->
-          sgd_step model input_idx context_idx neg_table neg_samples lr)
+          sgd_step model input_idx context_idx neg_table neg_samples lr ;
+          incr processed_pairs ;
+
+          if !processed_pairs mod log_interval = 0 then (
+            let current_time = Unix.gettimeofday () in
+            let elapsed_since_last = current_time -. !last_log_time in
+            let pairs_per_sec =
+              float_of_int log_interval /. elapsed_since_last
+            in
+            let percentage =
+              float_of_int !processed_pairs
+              /. float_of_int total_pairs_count
+              *. 100.0
+            in
+            Printf.printf
+              "[Epoch %d/%d] Processed %d pairs (%.1f%%, %.1f pairs/sec)\n"
+              epoch epochs !processed_pairs percentage pairs_per_sec ;
+            flush stdout ;
+            last_log_time := current_time))
         pairs ;
-      Printf.printf "[Epoch %d/%d] finished\n" epoch epochs ;
+
+      let epoch_end_time = Unix.gettimeofday () in
+      let epoch_duration = epoch_end_time -. epoch_start_time in
+      let avg_pairs_per_sec = float_of_int !processed_pairs /. epoch_duration in
+      let final_percentage =
+        float_of_int !processed_pairs /. float_of_int total_pairs_count *. 100.0
+      in
+      Printf.printf
+        "[Epoch %d/%d] finished (processed %d pairs, %.1f%%, %.2fs, avg %.1f \
+         pairs/sec)\n"
+        epoch epochs !processed_pairs final_percentage epoch_duration
+        avg_pairs_per_sec ;
       flush stdout
     done
 
