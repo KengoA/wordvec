@@ -27,7 +27,7 @@ dune exec bin/evaluate.exe
 dune exec bin/benchmark.exe
 ```
 
-## Configuration Options
+## Options
 
 The training script supports the following command-line options:
 
