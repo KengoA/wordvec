@@ -60,3 +60,42 @@ let read_chunks ~filename ~chunk_size_mb ~f =
 let cleanup_chunks chunk_files =
   List.iter (fun chunk -> try Sys.remove chunk with _ -> ()) chunk_files ;
   try Unix.rmdir "data/train/read_chunks" with _ -> ()
+
+let get_file_extension filename =
+  let len = String.length filename in
+  let rec find_dot i =
+    if i < 0 then ""
+    else if filename.[i] = '.' then String.sub filename (i + 1) (len - i - 1)
+    else find_dot (i - 1)
+  in
+  find_dot (len - 1)
+
+let is_xml_file filename =
+  let ext = get_file_extension filename in
+  String.lowercase_ascii ext = "xml"
+
+let is_txt_file filename =
+  let ext = get_file_extension filename in
+  String.lowercase_ascii ext = "txt"
+
+let prepare_text_file ~input_file =
+  if is_txt_file input_file then (
+    Printf.printf "[INFO] Input file is already a text file: %s\n" input_file ;
+    flush stdout ;
+    input_file
+  ) else if is_xml_file input_file then (
+    let output_txt = 
+      let base = Filename.remove_extension input_file in
+      base ^ ".txt"
+    in
+    Printf.printf "[INFO] Converting XML file %s to text file %s...\n" 
+      input_file output_txt ;
+    flush stdout ;
+    Preprocess.Xml_utils.xml_to_txt ~input_xml:input_file ~output_txt ;
+    Printf.printf "[INFO] Conversion complete.\n" ;
+    flush stdout ;
+    output_txt
+  ) else (
+    Printf.printf "[ERROR] Unsupported file format. Only .xml and .txt files are supported.\n" ;
+    failwith "Unsupported file format"
+  )

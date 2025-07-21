@@ -2,5 +2,5 @@
  (name io)
  (public_name wordvec.io)
  (modules file_utils)
- (libraries str unix)
+ (libraries str unix preprocess)
 )
