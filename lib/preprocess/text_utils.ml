@@ -5,7 +5,7 @@ let tokenize text =
   |> List.filter (fun w -> not (Str.string_match (Str.regexp "^[0-9]+$") w 0))
 
 let build_vocab tokens =
-  let tbl = Hashtbl.create 100 in
+  let tbl = Hashtbl.create 10000 in
   let idx = ref 0 in
   List.iter
     (fun w ->
@@ -15,9 +15,9 @@ let build_vocab tokens =
     tokens ;
   (tbl, !idx)
 
-let build_vocab_with_freq tokens =
-  let tbl = Hashtbl.create 100 in
-  let freq_tbl = Hashtbl.create 100 in
+let build_vocab_with_freq tokens min_vocab_freq =
+  let tbl = Hashtbl.create 10000 in
+  let freq_tbl = Hashtbl.create 10000 in
   let idx = ref 0 in
   List.iter
     (fun w ->
@@ -26,7 +26,7 @@ let build_vocab_with_freq tokens =
     tokens ;
   let sorted =
     Hashtbl.fold
-      (fun w c acc -> if c >= 10 then (w, c) :: acc else acc)
+      (fun w c acc -> if c >= min_vocab_freq then (w, c) :: acc else acc)
       freq_tbl []
     |> List.sort (fun (_, c1) (_, c2) -> compare c2 c1)
   in
