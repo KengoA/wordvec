@@ -10,7 +10,7 @@ val build_negative_sampling_table :
 val sample_negative : int array -> int -> int -> int list
 
 val build_vocab_with_freq :
-  string list -> (string, int) Hashtbl.t * int * (string * int) list
+  string list -> int -> (string, int) Hashtbl.t * int * (string * int) list
 
 val save_vocab_freq :
   filename:string -> sorted_vocab:(string * int) list -> unit
@@ -30,7 +30,7 @@ module Text_utils : sig
   val sample_negative : int array -> int -> int -> int list
 
   val build_vocab_with_freq :
-    string list -> (string, int) Hashtbl.t * int * (string * int) list
+    string list -> int -> (string, int) Hashtbl.t * int * (string * int) list
 
   val save_vocab_freq :
     filename:string -> sorted_vocab:(string * int) list -> unit
