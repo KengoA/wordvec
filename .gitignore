@@ -1,4 +1,7 @@
 _opam/*
 _build/
-data/*
+data/train/read_chunks/*
+data/train/*.txt
+data/train/*.xml
+data/artifacts/*.csv
 .DS_Store
