@@ -2,13 +2,13 @@
 OCaml implementation of word embedding algorithms with minimal dependencies.
 
 Supported algorithms:
-- word2vec (SkipGram)
+- [word2vec](https://arxiv.org/abs/1301.3781) (SkipGram)
 
 ## Getting started
 
 For a reasonably large example corpus, I would recommend using Simple Wikipedia dumps available at https://dumps.wikimedia.org/simplewiki/.
 
-Training on the English Simple Wikipedia corpus (around 1.3GB in XML) results in Pearson Correlation of 0.50 with Wordsim-353 benchmark.
+Training on the English Simple Wikipedia corpus (around 1.3GB in XML) results in Pearson Correlation of 0.50 with the [Wordsim-353](https://aclweb.org/aclwiki/WordSimilarity-353_Test_Collection_(State_of_the_art)) benchmark.
 
 ```bash
 brew install opam
@@ -17,8 +17,6 @@ brew install opam
 curl -L https://dumps.wikimedia.org/simplewiki/latest/simplewiki-latest-pages-articles-multistream.xml.bz2 | bunzip2 > data/train/simplewikipedia.xml
 
 dune build
-
-# Train the model with custom configuration
 dune exec bin/train.exe -- --input data/train/simplewikipedia.xml --dim 150 --window-size 15 --epochs 2 --workers 8
 
 # Evaluate Top 5 similar words for common words
